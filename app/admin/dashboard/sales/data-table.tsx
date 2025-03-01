@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ChevronDown } from "lucide-react";
-import CreateQuoteModal from "@/components/CreateQuoteModal";
+// import CreateQuoteModal from "@/components/CreateQuoteModal";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -43,7 +43,7 @@ export function DataTable<TData, TValue>({
   data,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  // const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
@@ -75,14 +75,14 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center py-4">
         <div className="flex items-center justify-center gap-2">
           <Input
-            placeholder="Filter emails..."
-            value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+            placeholder="Filter by customer ID..."
+            value={(table.getColumn("customerId")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("email")?.setFilterValue(event.target.value)
+              table.getColumn("customerId")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
-          <Button onClick={() => setIsModalOpen(true)}>Create Quote</Button>
+          {/* <Button onClick={() => setIsModalOpen(true)}>Create Quote</Button> */}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -154,7 +154,7 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  No purchases found.
                 </TableCell>
               </TableRow>
             )}
@@ -185,12 +185,12 @@ export function DataTable<TData, TValue>({
           </Button>
         </div>
       </div>
-      {isModalOpen && (
+      {/* {isModalOpen && (
         <CreateQuoteModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
         />
-      )}
+      )} */}
     </div>
   );
 }

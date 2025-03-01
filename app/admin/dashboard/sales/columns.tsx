@@ -21,68 +21,103 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-export type QuoteRequest = {
+export type Purchase = {
   id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  customizationRequests: string;
-  status: "pending" | "processing" | "success" | "failed";
-  preferredFinancing?: "CASH" | "MORTGAGE" | "LEASE_TO_OWN" | "UNDECIDED";
-  desiredMoveInDate?: Date;
-  estimatedBudget?: number;
+  customerId: string;
+  containerId: string;
+  status:
+    | "PENDING"
+    | "PAYMENT_RECEIVED"
+    | "PROCESSING"
+    | "SHIPPED"
+    | "DELIVERED"
+    | "CANCELLED"
+    | "REFUNDED";
+  amount: number;
+  paymentMethod?: string;
+  paymentId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  shippingAddress?: string;
+  trackingNumber?: string;
+  estimatedDelivery?: Date;
+  container?: {
+    title: string;
+    price: number;
+    size: "SMALL" | "MEDIUM" | "LARGE" | "EXTRA_LARGE" | "CUSTOM";
+  };
 };
-
-const QuoteDetailsModal = ({
-  quote,
+const PurchaseDetailsModal = ({
+  purchase,
   isOpen,
   onClose,
 }: {
-  quote: QuoteRequest | null;
+  purchase: Purchase | null;
   isOpen: boolean;
   onClose: () => void;
 }) => {
-  if (!quote) return null;
+  if (!purchase) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Quote Request Details</DialogTitle>
+          <DialogTitle>Purchase Details</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <h3 className="font-medium">Contact Information</h3>
-              <p>
-                Name: {quote.firstName} {quote.lastName}
-              </p>
-              <p>Email: {quote.email}</p>
-              <p>Phone: {quote.phone}</p>
-            </div>
-            <div>
-              <h3 className="font-medium">Quote Status</h3>
-              <p className="capitalize">{quote.status}</p>
-            </div>
-          </div>
-          <div>
-            <h3 className="font-medium">Customization Requests</h3>
-            <p className="whitespace-pre-wrap">{quote.customizationRequests}</p>
-          </div>
-          {quote.preferredFinancing && (
-            <div>
-              <h3 className="font-medium">Financing Details</h3>
-              <p>Preferred Financing: {quote.preferredFinancing}</p>
-              {quote.estimatedBudget && (
+              <h3 className="font-medium">Purchase Information</h3>
+              <p>Purchase ID: {purchase.id}</p>
+              <p>Customer ID: {purchase.customerId}</p>
+              <p>Container ID: {purchase.containerId}</p>
+              {purchase.container && (
                 <p>
-                  Estimated Budget: ${quote.estimatedBudget.toLocaleString()}
+                  Container: {purchase.container.title} (
+                  {purchase.container.size})
                 </p>
               )}
-              {quote.desiredMoveInDate && (
+            </div>
+            <div>
+              <h3 className="font-medium">Purchase Status</h3>
+              <p className="capitalize">{purchase.status.toLowerCase()}</p>
+              <p>Amount: ${purchase.amount.toLocaleString()}</p>
+              <p>
+                Created: {new Date(purchase.createdAt).toLocaleDateString()}
+              </p>
+              <p>
+                Updated: {new Date(purchase.updatedAt).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+
+          {(purchase.paymentMethod || purchase.paymentId) && (
+            <div>
+              <h3 className="font-medium">Payment Details</h3>
+              {purchase.paymentMethod && (
+                <p>Payment Method: {purchase.paymentMethod}</p>
+              )}
+              {purchase.paymentId && <p>Payment ID: {purchase.paymentId}</p>}
+            </div>
+          )}
+
+          {(purchase.shippingAddress ||
+            purchase.trackingNumber ||
+            purchase.estimatedDelivery) && (
+            <div>
+              <h3 className="font-medium">Shipping Details</h3>
+              {purchase.shippingAddress && (
+                <p className="whitespace-pre-wrap">
+                  Shipping Address: {purchase.shippingAddress}
+                </p>
+              )}
+              {purchase.trackingNumber && (
+                <p>Tracking Number: {purchase.trackingNumber}</p>
+              )}
+              {purchase.estimatedDelivery && (
                 <p>
-                  Desired Move-in Date:{" "}
-                  {new Date(quote.desiredMoveInDate).toLocaleDateString()}
+                  Estimated Delivery:{" "}
+                  {new Date(purchase.estimatedDelivery).toLocaleDateString()}
                 </p>
               )}
             </div>
@@ -93,13 +128,13 @@ const QuoteDetailsModal = ({
   );
 };
 
-const ActionCell = ({ quoteRequest }: { quoteRequest: QuoteRequest }) => {
+const ActionCell = ({ purchase }: { purchase: Purchase }) => {
   const [showDetails, setShowDetails] = useState(false);
 
   const handleDeleteQuote = async (id: string) => {
     if (confirm("Are you sure you want to delete this quote request?")) {
       try {
-        const response = await fetch(`/api/quote-requests/${id}`, {
+        const response = await fetch(`/api/purchases/${id}`, {
           method: "DELETE",
         });
 
@@ -128,30 +163,30 @@ const ActionCell = ({ quoteRequest }: { quoteRequest: QuoteRequest }) => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuItem
-            onClick={() => navigator.clipboard.writeText(quoteRequest.id)}
+            onClick={() => navigator.clipboard.writeText(purchase.id)}
           >
-            Copy Quote ID
+            Copy Purchase ID
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setShowDetails(true)}>
-            View Quote Details
+            View Purchase Details
           </DropdownMenuItem>
           <DropdownMenuSeparator />
 
-          {/* Delete Quote Request */}
+          {/* Delete Purchase */}
           <DropdownMenuItem
             className="text-red-500"
             onClick={() => {
-              handleDeleteQuote(quoteRequest.id);
+              handleDeleteQuote(purchase.id);
               console.log("clicked on delete post");
             }}
           >
-            Delete Quote Request
+            Delete Purchase
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <QuoteDetailsModal
-        quote={quoteRequest}
+      <PurchaseDetailsModal
+        purchase={purchase}
         isOpen={showDetails}
         onClose={() => setShowDetails(false)}
       />
@@ -159,7 +194,7 @@ const ActionCell = ({ quoteRequest }: { quoteRequest: QuoteRequest }) => {
   );
 };
 
-export const columns: ColumnDef<QuoteRequest>[] = [
+export const columns: ColumnDef<Purchase>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -183,56 +218,77 @@ export const columns: ColumnDef<QuoteRequest>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "firstName",
-    header: "First Name",
+    accessorKey: "id",
+    header: "Purchase ID",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("firstName")}</div>
+      <div className="font-medium truncate w-32">{row.getValue("id")}</div>
     ),
   },
   {
-    accessorKey: "lastName",
-    header: "Last Name",
+    accessorKey: "customerID",
+    header: "Customer ID",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("lastName")}</div>
+      <div className="capitalize truncate w-32">
+        {row.getValue("customerId")}
+      </div>
     ),
   },
   {
-    accessorKey: "email",
+    accessorKey: "container.title",
+    header: "Container",
+    cell: ({ row }) => {
+      const container = row.original.container;
+      return container ? <div>{container.title}</div> : <div>-</div>;
+    },
+  },
+  {
+    accessorKey: "amount",
     header: ({ column }) => (
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Email
+        Amount
         <ArrowUpDown />
       </Button>
     ),
-    cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
-  },
-  {
-    accessorKey: "phone",
-    header: "Phone",
-    cell: ({ row }) => <div>{row.getValue("phone")}</div>,
-  },
-  {
-    accessorKey: "customizationRequests",
-    header: "Customization Requests",
-    cell: ({ row }) => (
-      <div className="truncate w-48">
-        {row.getValue("customizationRequests")}
-      </div>
-    ),
+    cell: ({ row }) => {
+      const amount = parseFloat(row.getValue("amount"));
+      const formatted = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+      }).format(amount);
+      return <div>{formatted}</div>;
+    },
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("status")}</div>
+      <div className="capitalize">
+        {(row.getValue("status") as string).toLowerCase()}
+      </div>
     ),
+  },
+  {
+    accessorKey: "createdAt",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Date
+        <ArrowUpDown />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const date = new Date(row.getValue("createdAt"));
+      return <div>{date.toLocaleDateString()}</div>;
+    },
   },
   {
     id: "actions",
     enableHiding: false,
-    cell: ({ row }) => <ActionCell quoteRequest={row.original} />,
+    cell: ({ row }) => <ActionCell purchase={row.original} />,
   },
 ];
