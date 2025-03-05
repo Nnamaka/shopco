@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
-import { Loader, Trash2, Plus, X } from "lucide-react";
+import { Loader, Trash2,Loader2, Plus, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -82,6 +82,8 @@ export default function HousesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [tempUploadedImages, setTempUploadedImages] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // new
   const [newSpec, setNewSpec] = useState({
@@ -149,6 +151,93 @@ export default function HousesPage() {
 
   const handleSwitchChange = (checked: boolean) => {
     setNewContainer({ ...newContainer, isAvailable: checked });
+  };
+
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) {
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/containers", { method: "GET" });
+        const data = await res.json();
+        setContainers(data);
+      } catch {
+        console.error("Error fetching containers..");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const term = searchTerm.trim();
+
+      // Check if the search term looks like a UUID (container ID)
+      const isUuid =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          term
+        );
+
+      if (isUuid) {
+        // Search by ID
+        const filteredContainer = containers.find(
+          (container) => container.id === term
+        );
+        if (filteredContainer) {
+          setContainers([filteredContainer]);
+        } else {
+          setContainers([]);
+        }
+      } else {
+        // Try to convert to number for price search
+        const priceValue = parseFloat(term);
+
+        if (!isNaN(priceValue)) {
+          // Search by price
+          const filteredContainers = containers.filter(
+            (container) => container.price === priceValue
+          );
+          setContainers(filteredContainers);
+        } else {
+          // Search by title or size (case-insensitive partial match)
+          const filteredContainers = containers.filter(
+            (container) =>
+              container.title.toLowerCase().includes(term.toLowerCase()) ||
+              container.size.toLowerCase().includes(term.toLowerCase())
+          );
+          setContainers(filteredContainers);
+        }
+      }
+
+      // Add a small delay to make the loading state visible (optional)
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    } catch {
+      console.error("Error during search..");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !isLoading) {
+      handleSearch();
+    }
+  };
+
+  const handleClearSearch = async () => {
+    setSearchTerm("");
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/containers", { method: "GET" });
+      const data = await res.json();
+      setContainers(data);
+    } catch {
+      console.error("Error clearing search...");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSelectChange = (value: string) => {
@@ -350,7 +439,7 @@ export default function HousesPage() {
         const fileName = imageUrl.split("/").pop();
         if (fileName) {
           const { error } = await supabase.storage
-            .from("container")
+            .from("shopco")
             .remove([fileName]);
 
           if (error) {
@@ -360,7 +449,7 @@ export default function HousesPage() {
         }
       }
 
-      const res = await fetch(`/api/containers/${selectedContainer.id}`, {
+      const res = await fetch(`/api/containers?id=${selectedContainer.id}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -388,7 +477,7 @@ export default function HousesPage() {
         specifications: selectedContainer.specifications || undefined,
       };
 
-      const res = await fetch(`/api/containers/${selectedContainer.id}`, {
+      const res = await fetch(`/api/containers?id=${selectedContainer.id}`, {
         method: "PUT",
         body: JSON.stringify(updatedContainer),
         headers: { "Content-Type": "application/json" },
@@ -401,6 +490,8 @@ export default function HousesPage() {
           )
         );
         setSelectedContainer(null);
+      } else {
+        console.log("Error trying to update page");
       }
     } catch (error) {
       console.error("Error saving changes: ", error);
@@ -695,6 +786,41 @@ export default function HousesPage() {
         </DialogContent>
       </Dialog>
 
+      <div className="flex mb-4 gap-2">
+        <div className="relative flex-1">
+          <Input
+            type="text"
+            placeholder="Search by ID, price, title or size"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
+            className="pr-8"
+          />
+          {searchTerm && !isLoading && (
+            <button
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              onClick={handleClearSearch}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+          {isLoading && (
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+              <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+            </div>
+          )}
+        </div>
+        <Button onClick={handleSearch} disabled={isLoading}>
+          {isLoading ? "Searching..." : "Search"}
+        </Button>
+      </div>
+
+      {/* Message when no containers are found */}
+      {containers.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          No containers found with: {searchTerm}
+        </div>
+      )}
       <ul className="space-y-4">
         {containers.map((container) => (
           <li
