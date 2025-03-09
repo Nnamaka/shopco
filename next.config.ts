@@ -14,13 +14,13 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '64.media.tumblr.com',
         port: '',
-        pathname: '**', // Allow all paths under this hostname
+        pathname: '/db8472cfbb89a155148003b053d5f3de/4d6d987e0cee7307-8e/s400x225/158142e8e876044a6191733a02f6ee5ac1643b58.gif',
       },
       {
         protocol: 'https',
         hostname: 'i.pinimg.com',
         port: '',
-        pathname: '**', // Allow all paths under this hostname
+        pathname: '/originals/14/f4/35/14f435eaaf8d107cca5055ce150eaf47.gif',
       },
     ],
   },

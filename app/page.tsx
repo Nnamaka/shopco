@@ -3,19 +3,19 @@
 import { useState, useEffect } from "react";
 // import { useRouter } from 'next/router';
 // import { Container } from '@prisma/client';
-import { ContainerCard } from "@/components/hoodie-card";
+import { ContainerCard } from "@/components/containerCard";
 import { AutoSliderBanner } from "@/components/auto-slider-banner";
 // import { Decimal } from '@prisma/client/runtime/library';
 
 interface Container {
-  id: string; // Add id
+  id: string;
   title: string;
   price: number;
-  images: string[]; // Use array of images
-  description: string; // Add description
-  condition: string; // Add condition
-  location: string; // Add location
-  size: string; // Add size
+  images: string[];
+  description: string;
+  condition: string;
+  location: string;
+  size: string;
 }
 
 export default function Home() {
@@ -33,7 +33,6 @@ export default function Home() {
         setContainers(data);
       } catch (error) {
         console.error("Error fetching containers:", error);
-        // Handle error, e.g., show an error message to the user
       }
     }
     fetchContainers();
@@ -41,7 +40,6 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between">
-      {/* Full-screen Auto-sliding Banner */}
       <AutoSliderBanner />
 
       {/* Product Section */}

@@ -344,7 +344,7 @@ export default function HousesPage() {
           if (error) {
             console.error("Upload error:", error);
           } else {
-            const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/house/${fileName}`;
+            const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/shopco/${fileName}`;
             uploadedUrls.push(publicUrl);
           }
         }
@@ -849,6 +849,7 @@ export default function HousesPage() {
             </div>
             <p className="text-sm text-gray-600">{container.description}</p>
             {container.specifications &&
+            Array.isArray(container.specifications) &&
               container.specifications.length > 0 && (
                 <div className="mt-2">
                   <p className="text-sm font-medium">Specifications:</p>

@@ -41,6 +41,7 @@ export function ContainerCard({
           src={isHovered && images.length > 1 ? images[1] : images[0]}
           alt={title}
           fill
+          priority
           className="object-cover transition-opacity duration-300"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
         />

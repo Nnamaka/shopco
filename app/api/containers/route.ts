@@ -9,7 +9,28 @@ export async function GET() {
         createdAt: "desc", // Optional: order by most recently created
       },
     });
-    return NextResponse.json(containers, { status: 200 });
+
+    const processedContainers = containers.map(container => {
+      // Create a copy of the container to avoid modifying the original
+      const processedContainer = {...container};
+      
+      // Ensure specifications is an array
+      if (container.specifications) {
+        // If it's already an array, keep it; otherwise, convert to empty array
+        processedContainer.specifications = Array.isArray(container.specifications)
+          ? container.specifications
+          : [];
+      } else {
+        // If specifications is null or undefined, set to empty array
+        processedContainer.specifications = [];
+      }
+      
+      return processedContainer;
+    });
+
+    return NextResponse.json(processedContainers, { status: 200 });
+
+    // return NextResponse.json(containers, { status: 200 });
   } catch (error) {
     console.error("Error fetching containers:", error);
     return NextResponse.json(
