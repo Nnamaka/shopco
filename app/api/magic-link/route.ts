@@ -4,7 +4,7 @@ import crypto from "crypto";
 import nodemailer from "nodemailer";
 
 // const prisma = new PrismaClient();
-const ADMIN_EMAIL = ["Samuelobani1@gmail.com","nnamaka7@gmail.com"]; // Change this to your admin email
+const ADMIN_EMAIL = ["samuelobani1@gmail.com","nnamaka7@gmail.com"]; // Change this to your admin email
 const MAGIC_LINK_EXPIRY = 15 * 60 * 1000; // 15 minutes
 
 const isAdminEmail = (email: string): boolean => ADMIN_EMAIL.includes(email);
