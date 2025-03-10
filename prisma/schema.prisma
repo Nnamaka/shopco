@@ -78,28 +78,28 @@ model MagicLink {
 }
 
 model Container {
-  id            String          @id @default(cuid())
-  title         String
-  description   String          @db.Text
-  price         Decimal         @db.Decimal(10, 2)
-  images        String[]        // Array of image URLs
-  size          ContainerSize
-  condition     String
-  location      String
-  isAvailable   Boolean         @default(true)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  
+  id          String        @id @default(cuid())
+  title       String
+  description String        @db.Text
+  price       Decimal       @db.Decimal(10, 2)
+  images      String[] // Array of image URLs
+  size        ContainerSize
+  condition   String
+  location    String
+  isAvailable Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
   // Supplier of the container
-  supplierId    String?
-  
+  supplierId String?
+
   // Additional details
-  manufacturerInfo String?      @db.Text
+  manufacturerInfo String? @db.Text
   yearManufactured Int?
-  specifications   Json?        // Flexible JSON field for additional specs
-  
+  specifications   Json? // Flexible JSON field for additional specs
+
   // Relations
-  purchases     Purchase[]
+  purchases Purchase[]
 }
 
 enum ContainerSize {
@@ -111,20 +111,20 @@ enum ContainerSize {
 }
 
 model Purchase {
-  id            String    @id @default(cuid())
-  customerId    String
+  id            String         @id @default(cuid())
   containerId   String
-  container     Container @relation(fields: [containerId], references: [id])
+  container     Container      @relation(fields: [containerId], references: [id])
   status        PurchaseStatus @default(PENDING)
-  amount        Decimal   @db.Decimal(10, 2)
+  amount        Decimal        @db.Decimal(10, 2)
   paymentMethod String?
-  paymentId     String?   @unique
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
+  paymentId     String?        @unique
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  buyerEmail    String
+
   // Additional purchase details
-  shippingAddress String?  @db.Text
-  trackingNumber  String?
+  shippingAddress   String?   @db.Text
+  trackingNumber    String?
   estimatedDelivery DateTime?
 }
 

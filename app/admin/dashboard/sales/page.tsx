@@ -10,7 +10,6 @@ async function getPurchases(): Promise<Purchase[]> {
       },
       select: {
         id: true,
-        customerId: true,
         containerId: true,
         status: true,
         amount: true,
@@ -33,7 +32,6 @@ async function getPurchases(): Promise<Purchase[]> {
 
     return purchases.map((purchase) => ({
       id: purchase.id,
-      customerId: purchase.customerId,
       containerId: purchase.containerId,
       status: purchase.status as Purchase["status"],
       amount: parseFloat(purchase.amount.toString()),

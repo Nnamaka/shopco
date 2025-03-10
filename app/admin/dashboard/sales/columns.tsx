@@ -23,7 +23,6 @@ import {
 
 export type Purchase = {
   id: string;
-  customerId: string;
   containerId: string;
   status:
     | "PENDING"
@@ -69,7 +68,6 @@ const PurchaseDetailsModal = ({
             <div>
               <h3 className="font-medium">Purchase Information</h3>
               <p>Purchase ID: {purchase.id}</p>
-              <p>Customer ID: {purchase.customerId}</p>
               <p>Container ID: {purchase.containerId}</p>
               {purchase.container && (
                 <p>

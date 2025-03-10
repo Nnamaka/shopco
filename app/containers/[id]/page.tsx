@@ -22,6 +22,7 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
+import { PaystackButton } from "react-paystack";
 
 interface Container {
   id: string;
@@ -38,11 +39,12 @@ interface Container {
   specifications: any | null;
 }
 
-// interface FormattedSpec {
-//   heading: string;
-//   content: string;
-// }
-
+interface PaystackConfig {
+  reference: string;
+  email: string;
+  amount: number;
+  publicKey: string;
+}
 export default function ContainerDetailPage() {
   const { id } = useParams();
   const [container, setContainer] = useState<Container | null>(null);
@@ -50,9 +52,18 @@ export default function ContainerDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<string>("");
   const [isMobile, setIsMobile] = useState(false);
-  // const [needsTruncation, setNeedsTruncation] = useState(false);
+  const [buyerEmail, setBuyerEmail] = useState("");
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
 
-  // const [isTooltipOpen, setIsTooltipOpen] = useState(false);
+  // Paystack configuration
+  const [paystackConfig, setPaystackConfig] = useState<PaystackConfig | null>(
+    null
+  );
+
+  // Paystack public key - in production you'd want to use environment variables
+  const PAYSTACK_PUBLIC_KEY =
+    process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ||
+    "pk_test_your_public_key_here";
 
   // Format container size for display
   function formatContainerSize(size: string): string {
@@ -67,17 +78,12 @@ export default function ContainerDetailPage() {
     desktopLimit: number = 11,
     mobileLimit = 6
   ) {
-    // const limit = isMobile ? mobileLimit : desktopLimit;
     const limit = isMobile ? mobileLimit : desktopLimit;
     const needsTruncation = text && text.length > limit;
-    // setNeedsTruncation(!!needsTruncation)
     const displayText = needsTruncation
       ? `${text.substring(0, limit)}...`
       : text;
 
-    //   if (!text || text.length <= limit) return text;
-
-    //   return `${text.substring(0, limit)}...`;
     return displayText;
   }
 
@@ -219,12 +225,78 @@ export default function ContainerDetailPage() {
     if (id) fetchContainer();
   }, [id]);
 
-  // Handle buy container
-  const handleBuyContainer = async () => {
-    // Implementation for buying the container
-    alert(`Redirecting to purchase page for ${container?.title}`);
-    // Here you would typically navigate to a checkout page
-    // or show a payment form
+  const initializePayment = () => {
+    if (!container) return;
+
+    setShowPaymentForm(true);
+  };
+
+  const handleConfigurePaystack = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!container || !buyerEmail) return;
+
+    // Generate a unique reference
+    const reference = `container_${container.id}_${Date.now()}`;
+
+    // Configure Paystack
+    setPaystackConfig({
+      reference,
+      email: buyerEmail,
+      amount: container.price * 100, // Paystack amount is in kobo (100 kobo = 1 naira)
+      publicKey: PAYSTACK_PUBLIC_KEY,
+    });
+  };
+
+  // Paystack callback functions
+  const onSuccess = (reference: any) => {
+    // Handle successful payment
+    console.log("Payment successful:", reference);
+
+    // Call your API to update the container status
+    saveTransaction(reference);
+
+    // Show success message
+    alert("Payment successful! Your order has been placed.");
+
+    // Reset form
+    setShowPaymentForm(false);
+    setBuyerEmail("");
+    setPaystackConfig(null);
+  };
+
+  const onClose = () => {
+    // Handle when user closes payment modal
+    alert("Payment cancelled. You can try again when you're ready.");
+    setPaystackConfig(null);
+  };
+
+  // Save transaction to your backend
+  const saveTransaction = async (reference: any) => {
+    if (!container) return;
+
+    try {
+      // Call your API endpoint to save transaction details
+      const response = await fetch("/api/purchases", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          containerId: container.id,
+          paymentReference: reference.reference,
+          amount: container.price,
+          buyerEmail: buyerEmail,
+          status: "PAYMENT_RECEIVED",
+          // Add any other data you want to save
+        }),
+      });
+
+      const data = await response.json();
+      console.log("Transaction saved:", data);
+    } catch (error) {
+      console.error("Error saving transaction:", error);
+    }
   };
 
   if (!container) return <p className="text-center mt-2">Loading Container</p>;
@@ -463,15 +535,73 @@ export default function ContainerDetailPage() {
             )}
           </Tabs>
         </section>
+        {/* Payment Form Modal */}
+        {showPaymentForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-xl font-bold mb-4">Complete Your Purchase</h3>
+              <p className="mb-4">
+                You are about to purchase: <strong>{container.title}</strong>
+              </p>
+              <p className="text-lg font-bold mb-6">
+                Total: ${container.price.toLocaleString()}
+              </p>
+
+              {!paystackConfig ? (
+                <form onSubmit={handleConfigurePaystack} className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium mb-1"
+                    >
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={buyerEmail}
+                      onChange={(e) => setBuyerEmail(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                      required
+                      placeholder="Your email address"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowPaymentForm(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit">Proceed to Payment</Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex justify-center">
+                  <PaystackButton
+                    text="Pay Now"
+                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                    onSuccess={onSuccess}
+                    onClose={onClose}
+                    reference={paystackConfig.reference}
+                    email={paystackConfig.email}
+                    amount={paystackConfig.amount}
+                    publicKey={paystackConfig.publicKey}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Buy Button */}
         <div className="flex items-center justify-between mb-10">
           <Button
             className="mb-5 bg-green-600 hover:bg-green-700"
-            onClick={handleBuyContainer}
+            onClick={initializePayment}
             disabled={!container.isAvailable}
           >
-            {container.isAvailable ? "Buy" : "Not Available"}
+            {container.isAvailable ? "Buy Now" : "Not Available"}
           </Button>
           <div className="text-2xl font-bold">
             ${container.price.toLocaleString()}
