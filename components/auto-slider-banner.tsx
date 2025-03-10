@@ -50,8 +50,8 @@ export function AutoSliderBanner() {
         Premium Shipping Containers, Delivered.
         </h1>
         <p className="text-xl text-gray-300 text-center mb-8">Built for durability. Priced for value. Delivered to you.</p>
-        <Button onClick={handleShopClick} size="lg" variant="outline">
-          BUY
+        <Button onClick={handleShopClick} size="lg" variant="outline" className="italic">
+          Buy 👇
         </Button>
       </div>
     </div>
